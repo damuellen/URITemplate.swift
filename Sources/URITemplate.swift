@@ -100,7 +100,7 @@ public struct URITemplate : CustomStringConvertible, Equatable, Hashable, String
   
   /// Returns the set of keywords in the URI Template
   public var variables:[String] {
-    let expressions = regex.matches(template).map { expression in
+    let expressions = regex.matches(string: template).map { expression in
       // Removes the { and } from the expression
       expression.substringWithRange(expression.startIndex.successor()..<expression.endIndex.predecessor())
     }
@@ -129,7 +129,7 @@ public struct URITemplate : CustomStringConvertible, Equatable, Hashable, String
   
   /// Expand template as a URI Template using the given variables
   public func expand(variables:[String:AnyObject]) -> String {
-    return regex.substitute(template) { string in
+    return regex.substitute(string: template) { string in
       var expression = string.substringWithRange(string.startIndex.successor()..<string.endIndex.predecessor())
       let firstCharacter = expression.substringToIndex(expression.startIndex.successor())
       
@@ -163,10 +163,10 @@ public struct URITemplate : CustomStringConvertible, Equatable, Hashable, String
         }
         
         if let value:AnyObject = variables[variable] {
-          return op!.expand(variable, value: value, explode: explode, prefix:prefix)
+          return op!.expand(variable: variable, value: value, explode: explode, prefix:prefix)
         }
         
-        return op!.expand(variable, value:nil, explode:false, prefix:prefix)
+        return op!.expand(variable: variable, value:nil, explode:false, prefix:prefix)
       }
       
       let expansions = rawExpansions.reduce([], combine: { (accumulator, expansion) -> [String] in
@@ -205,7 +205,7 @@ public struct URITemplate : CustomStringConvertible, Equatable, Hashable, String
     }
     
     let regexes = expression.componentsSeparatedByString(",").map { variable -> String in
-      return self.regexForVariable(variable, op: op)
+      return self.regexForVariable(variable: variable, op: op)
     }
     return regexes.joined(separator: (op ?? StringExpansion()).joiner)
   }
@@ -213,11 +213,11 @@ public struct URITemplate : CustomStringConvertible, Equatable, Hashable, String
   var extractionRegex:NSRegularExpression? {
     let regex = try! NSRegularExpression(pattern: "(\\{([^\\}]+)\\})|[^(.*)]", options: NSRegularExpressionOptions(rawValue: 0))
     
-    let pattern = regex.substitute(self.template) { expression in
+    let pattern = regex.substitute(string: self.template) { expression in
       if expression.hasPrefix("{") && expression.hasSuffix("}") {
         let startIndex = expression.startIndex.successor()
         let endIndex = expression.endIndex.predecessor()
-        return self.regexForExpression(expression.substringWithRange(startIndex..<endIndex))
+        return self.regexForExpression(expression: expression.substringWithRange(startIndex..<endIndex))
       } else {
         return NSRegularExpression.escapedPatternForString(expression)
       }
